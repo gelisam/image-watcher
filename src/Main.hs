@@ -1,12 +1,31 @@
 {-# LANGUAGE ImportQualifiedPost, LambdaCase #-}
+import Control.Applicative
 import Graphics.UI.Gtk
 import Data.Time.Clock (UTCTime)
+import Options.Applicative qualified as CLI
 import System.Directory qualified as FilePath
 import System.FilePath qualified as FilePath
 import System.FSNotify (WatchManager)
 import System.FSNotify qualified as FSNotify
 import System.FSNotify.Devel qualified as FSNotify
 
+import Data.Semigroup ((<>))
+
+
+data Config = Config
+  { fileToWatch
+      :: FilePath
+  }
+  deriving (Show)
+
+parseConfig
+  :: CLI.Parser Config
+parseConfig
+    = Config
+  <$> CLI.argument CLI.str
+      ( CLI.metavar "FILE"
+     <> CLI.help "Image file to watch and display"
+      )
 
 watchFile
   :: WatchManager
@@ -21,9 +40,10 @@ watchFile watchManager relFile action = do
     (FSNotify.existsEvents (== absFile))
     action
 
-main
-  :: IO ()
-main = do
+imageWatcher
+  :: Config
+  -> IO ()
+imageWatcher (Config relFile) = do
   initGUI
   let w = 640
   let h = 480
@@ -32,17 +52,25 @@ main = do
   windowSetDefaultSize dialog w h
   dialogAddButton dialog stockClose ResponseClose
   contain <- dialogGetUpper dialog
-  image <- imageNewFromFile "out.png"
+  image <- imageNewFromFile relFile
   af <- aspectFrameNew 0.5 0.5 (Just 1.6)
   containerAdd af image
   boxPackStartDefaults contain af
 
   FSNotify.withManager $ \watchManager -> do
-    stopListening <- watchFile watchManager "out.png" $ \_ -> do
-      imageSetFromFile image "out.png"
+    stopListening <- watchFile watchManager relFile $ \_ -> do
+      imageSetFromFile image relFile
 
     widgetShowAll dialog
     dialogRun dialog
     stopListening
     widgetDestroy dialog
     flush
+
+main :: IO ()
+main = imageWatcher =<< CLI.execParser opts
+  where
+    opts = CLI.info (parseConfig <**> CLI.helper)
+      ( CLI.fullDesc
+     <> CLI.progDesc "Display an image and update it when the file changes"
+      )
