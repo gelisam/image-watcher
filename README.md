@@ -31,3 +31,5 @@ main = do
   withArgs ["--output", "out.png"] $ do
     mainWith myDiagram
 ```
+
+I then use `vim` in one terminal, `ghcid --test=main` in the other, and `image-watcher out.png` in the background.
