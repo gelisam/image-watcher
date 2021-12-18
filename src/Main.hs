@@ -1,20 +1,9 @@
-import Diagrams.Prelude (Diagram, circle)
-import Diagrams.Backend.Cairo.CmdLine (B, mainWith)
 import Graphics.UI.Gtk
-import System.Environment (withArgs)
 
-
-exampleDiagram
-  :: Diagram B
-exampleDiagram
-  = circle 10
 
 main
   :: IO ()
 main = do
-  withArgs ["--output", "out.png"] $ do
-    mainWith exampleDiagram
-  
   initGUI
   let w = 640
   let h = 480

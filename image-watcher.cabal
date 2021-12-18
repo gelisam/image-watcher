@@ -1,17 +1,13 @@
 cabal-version:      2.4
-name:               ghcidia
+name:               image-watcher
 version:            0.1.0.0
 
 author:             Samuel Gélineau
 maintainer:         gelisam+github@gmail.com
 
-executable ghcidia
+executable image-watcher
   main-is:          Main.hs
   build-depends:    base
-                  , cairo
-                  , diagrams-cairo
-                  , diagrams-core
-                  , diagrams-lib
                   , fsnotify
                   , gtk
   hs-source-dirs:   src
