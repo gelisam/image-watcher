@@ -1,5 +1,25 @@
+{-# LANGUAGE ImportQualifiedPost, LambdaCase #-}
 import Graphics.UI.Gtk
+import Data.Time.Clock (UTCTime)
+import System.Directory qualified as FilePath
+import System.FilePath qualified as FilePath
+import System.FSNotify (WatchManager)
+import System.FSNotify qualified as FSNotify
+import System.FSNotify.Devel qualified as FSNotify
 
+
+watchFile
+  :: WatchManager
+  -> FilePath
+  -> FSNotify.Action
+  -> IO FSNotify.StopListening
+watchFile watchManager relFile action = do
+  absFile <- FilePath.makeAbsolute relFile
+  FSNotify.watchDir
+    watchManager
+    (FilePath.takeDirectory absFile)
+    (FSNotify.existsEvents (== absFile))
+    action
 
 main
   :: IO ()
@@ -17,7 +37,12 @@ main = do
   containerAdd af image
   boxPackStartDefaults contain af
 
-  widgetShowAll dialog
-  dialogRun dialog
-  widgetDestroy dialog
-  flush
+  FSNotify.withManager $ \watchManager -> do
+    stopListening <- watchFile watchManager "out.png" $ \_ -> do
+      imageSetFromFile image "out.png"
+
+    widgetShowAll dialog
+    dialogRun dialog
+    stopListening
+    widgetDestroy dialog
+    flush
